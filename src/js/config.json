@@ -1,0 +1,40 @@
+[
+  {
+    "type": "heading",
+    "defaultValue": "WatMoney",
+    "size": 2
+  },
+  {
+    "type": "text",
+    "defaultValue": "Enter your WatCard number and pin below"
+  },
+  {
+    "type": "input",
+    "appKey": "account_id",
+    "defaultValue": "",
+    "label": "WardCard number",
+    "attributes": {
+      "placeholder": "eg: 20512345",
+      "limit": 8,
+      "required": "required",
+      "type": "number"
+    }
+  },
+  {
+    "type": "input",
+    "appKey": "account_pin",
+    "defaultValue": "",
+    "label": "Pin",
+    "attributes": {
+     "placeholder": "eg: 1234",
+      "limit": 4,
+      "required": "required",
+      "type": "password",
+      "inputmode": "numeric"
+    }
+  },
+  {
+    "type": "submit",
+    "defaultValue": "Save"
+  }
+]
