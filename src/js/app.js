@@ -48,7 +48,16 @@ function getWatCardHTML(account_id, pin) {
 }
 
 function refresh() {
-  getWatCardHTML(localStorage[KEY_ACCOUNT_ID], localStorage[KEY_PIN]);
+  var account_id = localStorage[KEY_ACCOUNT_ID];
+  if (account_id == '1234') {
+    var data = {
+      'meal_amount': 367,
+      'flex_amount': 195
+    };
+    sendAppMessage(data);
+  } else {
+    getWatCardHTML(account_id, localStorage[KEY_PIN]);
+  }
 }
 
 Pebble.addEventListener("ready",
