@@ -25,7 +25,7 @@ static void prv_fill_radial(GContext *ctx, GColor color, GRect *box, int32_t sta
 }
 
 static void prv_update_proc(Layer *layer, GContext *context) {
-  PercentageDisplay *display = (PercentageDisplay *)layer_get_data(layer);
+  PercentageDisplay *display = layer_get_data(layer);
   GRect box = layer_get_bounds(layer);
   prv_fill_radial(context, display->secondary_color, &box, 0, 360);
 
@@ -45,7 +45,7 @@ static void prv_fill_rect(GContext *ctx, GColor color, GRect *box) {
   graphics_fill_rect(ctx, *box, 0, GCornerNone);
 }
 static void prv_update_proc(Layer *layer, GContext *context) {
-  PercentageDisplay *display = (PercentageDisplay *)layer_get_data(layer);
+  PercentageDisplay *display = layer_get_data(layer);
   GRect box = layer_get_bounds(layer);
   prv_fill_rect(context, GColorImperialPurple, &box);
 
@@ -65,7 +65,7 @@ static void prv_update_proc(Layer *layer, GContext *context) {
 
 PercentageDisplay *percentage_display_create(const GRect *bounds) {
   Layer *layer = layer_create_with_data(*bounds, sizeof(PercentageDisplay));
-  PercentageDisplay *data = (PercentageDisplay *) layer_get_data(layer);
+  PercentageDisplay *data = layer_get_data(layer);
   data->layer = layer;
 
   layer_set_update_proc(layer, prv_update_proc);
