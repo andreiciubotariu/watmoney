@@ -130,6 +130,10 @@ static void prv_inbox_dropped_callback(AppMessageResult reason, void *context) {
 }
 
 static void prv_request_refresh(void) {
+  if (!connection_service_peek_pebble_app_connection()) {
+    message_display_show_not_connected_text(s_data->message_display);
+    return;
+  }
   message_display_show_wait_text(s_data->message_display);
   DictionaryIterator *iter;
   app_message_outbox_begin(&iter);

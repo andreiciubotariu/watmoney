@@ -4,6 +4,7 @@
 
 static const char *TEXT_WAIT = "WAIT";
 static const char *TEXT_ERROR = "ERROR \U0001F625";
+static const char *TEXT_NO_CONNETION = "NO CONNECTION";
 
 struct MessageDisplay {
   Layer *layer;
@@ -60,6 +61,12 @@ void message_display_hide(const MessageDisplay *display){
 
 static void prv_show(const MessageDisplay *display) {
   layer_set_hidden(display->layer, false);
+}
+
+void message_display_show_not_connected_text(MessageDisplay *display) {
+  display->message = TEXT_NO_CONNETION;
+  prv_show(display);
+  layer_mark_dirty(display->layer);
 }
 
 void message_display_show_wait_text(MessageDisplay *display) {
