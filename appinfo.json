@@ -12,10 +12,11 @@
     "watchface": false
   },
   "appKeys": {
-    "request_refresh": 0,
-    "error": 1,
-    "meal_amount": 2,
-    "flex_amount": 3
+    "js_ready" :0,
+    "request_refresh": 1,
+    "error": 2,
+    "meal_amount": 3,
+    "flex_amount": 4
   },
   "resources": {
     "media": []

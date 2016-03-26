@@ -4,7 +4,7 @@
 
 static const char *TEXT_WAIT = "WAIT";
 static const char *TEXT_ERROR = "ERROR \U0001F625";
-static const char *TEXT_NO_CONNETION = "NO CONNECTION";
+static const char *TEXT_NO_CONNETION = "NO PHONE\nCONNECTION";
 
 struct MessageDisplay {
   Layer *layer;

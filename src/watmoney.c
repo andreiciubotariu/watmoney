@@ -7,10 +7,11 @@
 #define WATMONEY_CALC_PERCENT(meal, flex) (100 * flex / (meal + flex))
 
 typedef enum AppKey {
- AppKey_RequestRefresh = 0,
- AppKey_Error = 1,
- AppKey_MealBalance = 2,
- AppKey_FlexBalance = 3,
+  AppKey_JSReady = 0,
+  AppKey_RequestRefresh = 1,
+  AppKey_Error = 2,
+  AppKey_MealBalance = 3,
+  AppKey_FlexBalance = 4,
 } AppKey;
 
 typedef struct AnimationData {
@@ -28,6 +29,7 @@ typedef struct WatMoneyData {
   MessageDisplay *message_display;
   PercentageDisplay *percentage_display;
   AnimationData animation_data;
+  bool is_js_ready; // checked when sending appmessages
   unsigned int meal_balance;
   unsigned int flex_balance;
 } WatMoneyData;
@@ -77,6 +79,13 @@ static void prv_inbox_received_callback(DictionaryIterator *iterator, void *cont
   if (error) {
     APP_LOG(APP_LOG_LEVEL_INFO, "Error retrieving balance");
     goto fail;
+  }
+
+  Tuple *js_ready = dict_find(iterator, AppKey_JSReady);
+  if (js_ready) {
+    s_data->is_js_ready = true;
+    prv_request_refresh();
+    return;
   }
 
   Tuple *meal_balance_tuple = dict_find(iterator, AppKey_MealBalance);
@@ -129,9 +138,21 @@ static void prv_inbox_dropped_callback(AppMessageResult reason, void *context) {
   APP_LOG(APP_LOG_LEVEL_ERROR, "Message dropped (%u)", reason);
 }
 
-static void prv_request_refresh(void) {
-  if (!connection_service_peek_pebble_app_connection()) {
+static void prv_show_no_connection_text_if_needed(bool *showed_text_out) {
+  bool is_connected = connection_service_peek_pebble_app_connection();
+  if (!is_connected) {
     message_display_show_not_connected_text(s_data->message_display);
+  }
+  *showed_text_out = !is_connected;
+}
+
+static void prv_request_refresh(void) {
+  bool showed_no_connection_text;
+  prv_show_no_connection_text_if_needed(&showed_no_connection_text);
+  if (showed_no_connection_text) {
+    return;
+  }
+  if (!s_data->is_js_ready) {
     return;
   }
   message_display_show_wait_text(s_data->message_display);
@@ -199,7 +220,11 @@ static void prv_window_load(Window *window) {
   layer_add_child(window_get_root_layer(window),
                   message_display_get_layer(s_data->message_display));
 
-  prv_request_refresh();
+  bool showed_no_connection_text;
+  prv_show_no_connection_text_if_needed(&showed_no_connection_text);
+  if (!showed_no_connection_text) {
+    message_display_show_wait_text(s_data->message_display);
+  }
 }
 
 static void prv_window_unload(Window *window) {

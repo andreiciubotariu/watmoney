@@ -62,8 +62,8 @@ function refresh() {
 
 Pebble.addEventListener("ready",
     function ready(e) {
-        console.log("Hello world! - Sent from your javascript application.");
-        refresh();
+      console.log("JS Ready");
+      sendAppMessage({'js_ready': 1});
     }
 );
 
