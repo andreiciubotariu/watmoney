@@ -13,8 +13,6 @@ struct PercentageDisplay {
   GColor secondary_color;
 };
 
-static PercentageDisplay *s_percentage_display;
-
 #if defined(PBL_ROUND)
 // Angles in degrees
 static void prv_fill_radial(GContext *ctx, GColor color, GRect *box, int32_t start_angle,
