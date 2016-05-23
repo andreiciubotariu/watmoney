@@ -3,7 +3,7 @@ var Clay = require('clay');
 var clayConfig = require('config.json');
 var clay = new Clay(clayConfig, null, { autoHandleEvents: false });
 
-const WATCARD_URL_BEGIN = 'https://account.watcard.uwaterloo.ca/watgopher661.asp?';
+const WATCARD_URL_BEGIN = 'http://watcard.uwaterloo.ca/oneweb/watgopher661.asp?';
 const WATCARD_URL_END = '&FINDATAREP=ON&MESSAGEREP=ON&STATUS=STATUS&watgopher_title=WatCard+Account+Status';
 const KEY_ACCOUNT_ID = 'account_id';
 const KEY_PIN = 'account_pin';
@@ -18,30 +18,35 @@ function sendAppMessage(data) {
   });
 }
 
+// Send a generic error message back
+function sendError() {
+  var data = {
+    'error': 1
+  };
+  sendAppMessage(data);
+}
+
 function getWatCardHTML(account_id, pin) {
   var req = new XMLHttpRequest();
   var url = WATCARD_URL_BEGIN + 'acnt_1=' + account_id + '&acnt_2=' + pin + WATCARD_URL_END;
+  console.log('url ' + url);
   req.open('POST', url, true);
   req.onload = function(e) {
     if (req.readyState == 4 && req.status == 200) {
-      if(req.status == 200) {
-        var response = req.responseText;
-        parser.parse(response, function onResult(balance){
-          var data = {
-            'meal_amount': Math.floor(balance.meal),
-            'flex_amount': Math.floor(balance.flex)
-          };
-          sendAppMessage(data);
-        }, function onError(){
-          console.log('Error on parse!');
-          var data = {
-            'error': 1
-          };
-          sendAppMessage(data);
-        });
-      }
+      var response = req.responseText;
+      parser.parse(response, function onResult(balance){
+        var data = {
+          'meal_amount': Math.floor(balance.meal),
+          'flex_amount': Math.floor(balance.flex)
+        };
+        sendAppMessage(data);
+      }, function onError(){
+        console.log('Error on parse!');
+        sendError();
+      });
     } else {
-      console.log('Error');
+      console.log('Error on fetch. New URL perhaps?');
+      sendError();
     }
   }
   req.send(null);
