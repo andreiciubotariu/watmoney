@@ -5,14 +5,7 @@
 #include <pebble.h>
 
 #define WATMONEY_CALC_PERCENT(meal, flex) (100 * flex / (meal + flex))
-
-typedef enum AppKey {
-  AppKey_JSReady = 0,
-  AppKey_RequestRefresh = 1,
-  AppKey_Error = 2,
-  AppKey_MealBalance = 3,
-  AppKey_FlexBalance = 4,
-} AppKey;
+#define WATMONEY_GLANCE_SUBTITLE_BUFFER_SIZE (50)
 
 typedef struct AnimationData {
   unsigned int starting_meal_balance;
@@ -32,6 +25,7 @@ typedef struct WatMoneyData {
   bool is_js_ready; // checked when sending appmessages
   unsigned int meal_balance;
   unsigned int flex_balance;
+  char glance_subtitle_buffer[WATMONEY_GLANCE_SUBTITLE_BUFFER_SIZE];
 } WatMoneyData;
 
 static WatMoneyData *s_data;
@@ -71,30 +65,51 @@ static void prv_animation_create() {
   animation_schedule(animation);
 }
 
+static void prv_update_app_glance(AppGlanceReloadSession *session, size_t limit, void *context) {
+  if (limit < 1) {
+    return;
+  }
+  const char *glance_text = context;
+  const AppGlanceSlice entry = (AppGlanceSlice) {
+    .layout = {
+      .icon = PUBLISHED_ID_DOLLAR_SIGN_ICON,
+      .subtitle_template_string = glance_text,
+    },
+    .expiration_time = APP_GLANCE_SLICE_NO_EXPIRATION,
+  };
+
+  const AppGlanceResult result = app_glance_add_slice(session, entry);
+  if (result != APP_GLANCE_RESULT_SUCCESS) {
+    APP_LOG(APP_LOG_LEVEL_ERROR, "Could not add AppGlance, Error %d", result);
+  }
+}
+
 static void prv_inbox_received_callback(DictionaryIterator *iterator, void *context) {
   APP_LOG(APP_LOG_LEVEL_INFO, "Inbox received");
   animation_unschedule_all();
 
-  Tuple *error = dict_find(iterator, AppKey_Error);
+  s_data->glance_subtitle_buffer[0] = '\0';
+
+  Tuple *error = dict_find(iterator, MESSAGE_KEY_Error);
   if (error) {
     APP_LOG(APP_LOG_LEVEL_INFO, "Error retrieving balance");
     goto fail;
   }
 
-  Tuple *js_ready = dict_find(iterator, AppKey_JSReady);
+  Tuple *js_ready = dict_find(iterator, MESSAGE_KEY_JSReady);
   if (js_ready) {
     s_data->is_js_ready = true;
     prv_request_refresh();
     return;
   }
 
-  Tuple *meal_balance_tuple = dict_find(iterator, AppKey_MealBalance);
+  Tuple *meal_balance_tuple = dict_find(iterator, MESSAGE_KEY_MealBalance);
   if (!meal_balance_tuple) {
     APP_LOG(APP_LOG_LEVEL_INFO, "No meal balance, cannot proceed");
     goto fail;
   }
 
-  Tuple *flex_balance_tuple = dict_find(iterator, AppKey_FlexBalance);
+  Tuple *flex_balance_tuple = dict_find(iterator, MESSAGE_KEY_FlexBalance);
   if (!flex_balance_tuple) {
     APP_LOG(APP_LOG_LEVEL_INFO, "No flex balance, cannot proceed");
     goto fail;
@@ -111,7 +126,8 @@ process_data:
   const unsigned int flex_balance = flex_balance_tuple->value->uint32;
 
   if (meal_balance == 0 && meal_balance == 0) {
-    balance_display_set_amounts(s_data->balance_display, s_data->meal_balance, s_data->flex_balance);
+    balance_display_set_amounts(s_data->balance_display, s_data->meal_balance,
+                                s_data->flex_balance);
     percentage_display_set_percentage(s_data->percentage_display, 0);
   } else {
     AnimationData *data = &(s_data->animation_data);
@@ -130,8 +146,13 @@ process_data:
   }
   s_data->meal_balance = meal_balance;
   s_data->flex_balance = flex_balance;
-  persist_write_data(AppKey_MealBalance, &(s_data->meal_balance), sizeof(s_data->meal_balance));
-  persist_write_data(AppKey_FlexBalance, &(s_data->flex_balance), sizeof(s_data->flex_balance));
+  persist_write_data(MESSAGE_KEY_MealBalance, &(s_data->meal_balance),
+                     sizeof(s_data->meal_balance));
+  persist_write_data(MESSAGE_KEY_FlexBalance, &(s_data->flex_balance),
+                     sizeof(s_data->flex_balance));
+
+  snprintf(s_data->glance_subtitle_buffer, WATMONEY_GLANCE_SUBTITLE_BUFFER_SIZE,
+           "Meal: %u | Flex: %u", s_data->meal_balance, s_data->flex_balance);
 }
 
 static void prv_inbox_dropped_callback(AppMessageResult reason, void *context) {
@@ -158,7 +179,7 @@ static void prv_request_refresh(void) {
   message_display_show_wait_text(s_data->message_display);
   DictionaryIterator *iter;
   app_message_outbox_begin(&iter);
-  dict_write_uint8(iter, AppKey_RequestRefresh, 1);
+  dict_write_uint8(iter, MESSAGE_KEY_RequestRefresh, 1);
   app_message_outbox_send();
 }
 
@@ -244,8 +265,8 @@ static void prv_init(void) {
   });
   window_set_click_config_provider(s_data->main_window, prv_click_config_provider);
 
-  persist_read_data(AppKey_MealBalance, &(s_data->meal_balance), sizeof(s_data->meal_balance));
-  persist_read_data(AppKey_FlexBalance, &(s_data->flex_balance), sizeof(s_data->flex_balance));
+  persist_read_data(MESSAGE_KEY_MealBalance, &(s_data->meal_balance), sizeof(s_data->meal_balance));
+  persist_read_data(MESSAGE_KEY_FlexBalance, &(s_data->flex_balance), sizeof(s_data->flex_balance));
 
   app_message_register_inbox_received(prv_inbox_received_callback);
   app_message_register_inbox_dropped(prv_inbox_dropped_callback);
@@ -260,6 +281,7 @@ static void prv_init(void) {
 }
 
 static void prv_deinit(void) {
+  app_glance_reload(prv_update_app_glance, s_data->glance_subtitle_buffer);
   animation_unschedule_all();
   window_stack_pop_all(false);
   window_destroy(s_data->main_window);

@@ -1,6 +1,7 @@
-var parser = require('parser');
-var Clay = require('clay');
-var clayConfig = require('config.json');
+var parser = require('./parser.js');
+var Clay = require('pebble-clay');
+var messageKeys = require('message_keys');
+var clayConfig = require('./config.json');
 var clay = new Clay(clayConfig, null, { autoHandleEvents: false });
 
 const WATCARD_URL_BEGIN = 'http://watcard.uwaterloo.ca/oneweb/watgopher661.asp?';
@@ -20,10 +21,9 @@ function sendAppMessage(data) {
 
 // Send a generic error message back
 function sendError() {
-  var data = {
-    'error': 1
-  };
-  sendAppMessage(data);
+  messageDict = {};
+  messageDict[messageKeys.Error] = 1;
+  sendAppMessage(messageDict);
 }
 
 function getWatCardHTML(account_id, pin) {
@@ -35,11 +35,10 @@ function getWatCardHTML(account_id, pin) {
     if (req.readyState == 4 && req.status == 200) {
       var response = req.responseText;
       parser.parse(response, function onResult(balance){
-        var data = {
-          'meal_amount': Math.floor(balance.meal),
-          'flex_amount': Math.floor(balance.flex)
-        };
-        sendAppMessage(data);
+        messageDict = {};
+        messageDict[messageKeys.MealBalance] = Math.floor(balance.meal);
+        messageDict[messageKeys.FlexBalance] = Math.floor(balance.flex);
+        sendAppMessage(messageDict);
       }, function onError(){
         console.log('Error on parse!');
         sendError();
@@ -54,12 +53,11 @@ function getWatCardHTML(account_id, pin) {
 
 function refresh() {
   var account_id = localStorage[KEY_ACCOUNT_ID];
+  messageDict = {};
   if (account_id == '1234') {
-    var data = {
-      'meal_amount': 367,
-      'flex_amount': 195
-    };
-    sendAppMessage(data);
+    messageDict[messageKeys.MealBalance] = 367;
+    messageDict[messageKeys.FlexBalance] = 195;
+    sendAppMessage(messageDict);
   } else {
     getWatCardHTML(account_id, localStorage[KEY_PIN]);
   }
@@ -68,14 +66,16 @@ function refresh() {
 Pebble.addEventListener("ready",
     function ready(e) {
       console.log("JS Ready");
-      sendAppMessage({'js_ready': 1});
+      messageDict = {};
+      messageDict[messageKeys.JSReady] = 1;
+      sendAppMessage(messageDict);
     }
 );
 
 Pebble.addEventListener('appmessage',
   function(e) {
     console.log('Received message: ' + JSON.stringify(e.payload));
-    if (e.payload.request_refresh) {
+    if (e.payload.RequestRefresh) {
       refresh();
     }
   }
@@ -91,8 +91,8 @@ Pebble.addEventListener('webviewclosed', function(e) {
   }
 
   var dict = clay.getSettings(e.response);
-  localStorage[KEY_ACCOUNT_ID] = dict[KEY_ACCOUNT_ID];
-  localStorage[KEY_PIN] = dict[KEY_PIN];
+  localStorage[KEY_ACCOUNT_ID] = dict[messageKeys.Dummy_AccountId];
+  localStorage[KEY_PIN] = dict[messageKeys.Dummy_AccountPin];
 
   refresh();
 });

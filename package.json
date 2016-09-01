@@ -1,0 +1,57 @@
+{
+  "version": "1.4.0",
+  "author": "Andrei Ciubotariu",
+  "private": true,
+  "dependencies": {
+    "pebble-clay": "^1.0.2"
+  },
+  "keywords": [
+    "pebble-app"
+  ],
+  "pebble": {
+    "sdkVersion": "3",
+    "resources": {
+      "media": [
+        {
+          "name": "DOLLAR_SIGN_ICON_TINY",
+          "type": "bitmap",
+          "file": "media/dollar_sign_icon_tiny.png"
+        }
+      ],
+      "publishedMedia": [
+        {
+          "name": "DOLLAR_SIGN_ICON",
+          "id": 1,
+          "glance": "DOLLAR_SIGN_ICON_TINY"
+        }
+      ]
+    },
+    "projectType": "native",
+    "uuid": "f4fa094b-2547-4e52-baf3-dd6d68550540",
+    "messageKeys": {
+      "FlexBalance": 4,
+      "MealBalance": 3,
+      "RequestRefresh": 1,
+      "JSReady": 0,
+      "Error": 2,
+      "Dummy_AccountId": 5,
+      "Dummy_AccountPin": 6
+    },
+    "enableMultiJS": true,
+    "displayName": "WatMoney",
+    "watchapp": {
+      "onlyShownOnCommunication": false,
+      "hiddenApp": false,
+      "watchface": false
+    },
+    "targetPlatforms": [
+      "aplite",
+      "basalt",
+      "chalk"
+    ],
+    "capabilities": [
+      "configurable"
+    ]
+  },
+  "name": "WatMoney"
+}
