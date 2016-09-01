@@ -5,6 +5,7 @@
 #include <pebble.h>
 
 #define WATMONEY_CALC_PERCENT(meal, flex) (100 * flex / (meal + flex))
+#define WATMONEY_GLANCE_SUBTITLE_BUFFER_SIZE (50)
 
 typedef struct AnimationData {
   unsigned int starting_meal_balance;
@@ -24,6 +25,7 @@ typedef struct WatMoneyData {
   bool is_js_ready; // checked when sending appmessages
   unsigned int meal_balance;
   unsigned int flex_balance;
+  char glance_subtitle_buffer[WATMONEY_GLANCE_SUBTITLE_BUFFER_SIZE];
 } WatMoneyData;
 
 static WatMoneyData *s_data;
@@ -61,6 +63,25 @@ static void prv_animation_create() {
   };
   animation_set_implementation(animation, &impl);
   animation_schedule(animation);
+}
+
+static void prv_update_app_glance(AppGlanceReloadSession *session, size_t limit, void *context) {
+  if (limit < 1) {
+    return;
+  }
+  const char *glance_text = context;
+  const AppGlanceSlice entry = (AppGlanceSlice) {
+    .layout = {
+      .icon = APP_GLANCE_SLICE_DEFAULT_ICON,
+      .subtitle_template_string = glance_text,
+    },
+    .expiration_time = APP_GLANCE_SLICE_NO_EXPIRATION,
+  };
+
+  const AppGlanceResult result = app_glance_add_slice(session, entry);
+  if (result != APP_GLANCE_RESULT_SUCCESS) {
+    APP_LOG(APP_LOG_LEVEL_ERROR, "Could not add AppGlance, Error %d", result);
+  }
 }
 
 static void prv_inbox_received_callback(DictionaryIterator *iterator, void *context) {
@@ -127,6 +148,10 @@ process_data:
                      sizeof(s_data->meal_balance));
   persist_write_data(MESSAGE_KEY_FlexBalance, &(s_data->flex_balance),
                      sizeof(s_data->flex_balance));
+
+  snprintf(s_data->glance_subtitle_buffer, WATMONEY_GLANCE_SUBTITLE_BUFFER_SIZE,
+           "Meal: %u | Flex: %u", s_data->meal_balance, s_data->flex_balance);
+  app_glance_reload(prv_update_app_glance, s_data->glance_subtitle_buffer);
 }
 
 static void prv_inbox_dropped_callback(AppMessageResult reason, void *context) {
