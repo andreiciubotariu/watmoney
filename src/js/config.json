@@ -13,7 +13,7 @@
       },
       {
         "type": "input",
-        "appKey": "account_id",
+        "messageKey": "Dummy_AccountId",
         "defaultValue": "",
         "label": "WardCard number",
         "attributes": {
@@ -25,7 +25,7 @@
       },
       {
         "type": "input",
-        "appKey": "account_pin",
+        "messageKey": "Dummy_AccountPin",
         "defaultValue": "",
         "label": "Pin",
         "attributes": {
