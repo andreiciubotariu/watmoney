@@ -11,7 +11,20 @@
   "pebble": {
     "sdkVersion": "3",
     "resources": {
-      "media": []
+      "media": [
+        {
+          "name": "DOLLAR_SIGN_ICON_TINY",
+          "type": "bitmap",
+          "file": "media/dollar_sign_icon_tiny.png"
+        }
+      ],
+      "publishedMedia": [
+        {
+          "name": "DOLLAR_SIGN_ICON",
+          "id": 1,
+          "glance": "DOLLAR_SIGN_ICON_TINY"
+        }
+      ]
     },
     "projectType": "native",
     "uuid": "f4fa094b-2547-4e52-baf3-dd6d68550540",

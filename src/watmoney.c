@@ -72,7 +72,7 @@ static void prv_update_app_glance(AppGlanceReloadSession *session, size_t limit,
   const char *glance_text = context;
   const AppGlanceSlice entry = (AppGlanceSlice) {
     .layout = {
-      .icon = APP_GLANCE_SLICE_DEFAULT_ICON,
+      .icon = PUBLISHED_ID_DOLLAR_SIGN_ICON,
       .subtitle_template_string = glance_text,
     },
     .expiration_time = APP_GLANCE_SLICE_NO_EXPIRATION,
@@ -87,6 +87,8 @@ static void prv_update_app_glance(AppGlanceReloadSession *session, size_t limit,
 static void prv_inbox_received_callback(DictionaryIterator *iterator, void *context) {
   APP_LOG(APP_LOG_LEVEL_INFO, "Inbox received");
   animation_unschedule_all();
+
+  s_data->glance_subtitle_buffer[0] = '\0';
 
   Tuple *error = dict_find(iterator, MESSAGE_KEY_Error);
   if (error) {
@@ -151,7 +153,6 @@ process_data:
 
   snprintf(s_data->glance_subtitle_buffer, WATMONEY_GLANCE_SUBTITLE_BUFFER_SIZE,
            "Meal: %u | Flex: %u", s_data->meal_balance, s_data->flex_balance);
-  app_glance_reload(prv_update_app_glance, s_data->glance_subtitle_buffer);
 }
 
 static void prv_inbox_dropped_callback(AppMessageResult reason, void *context) {
@@ -280,6 +281,7 @@ static void prv_init(void) {
 }
 
 static void prv_deinit(void) {
+  app_glance_reload(prv_update_app_glance, s_data->glance_subtitle_buffer);
   animation_unschedule_all();
   window_stack_pop_all(false);
   window_destroy(s_data->main_window);
